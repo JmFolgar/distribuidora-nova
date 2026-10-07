@@ -8,11 +8,11 @@ services:
     environment:
       POSTGRES_USER: nova
       POSTGRES_PASSWORD: nova123
-      POSTGRES_DB: distribuidora_nova
+      POSTGRES_DB: ferreteria
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nova -d distribuidora_nova"]
+      test: ["CMD-SHELL", "pg_isready -U nova -d ferreteria"]
       interval: 5s
       timeout: 5s
       retries: 5

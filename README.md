@@ -9,61 +9,228 @@ Sistema de gestión para la ferretería **Distribuidora Nova**.
 | Frontend | React + Vite |
 | Backend | Node.js + Express |
 | ORM | Drizzle |
-| Base de datos | PostgreSQL (Docker) |
+| Base de datos | PostgreSQL 16 (Docker) |
+| Modelo SQL | Script `FER_*` en `SQL/Scripts` |
 
 ## Requisitos
 
-- Node.js 20+
-- Docker Desktop (para PostgreSQL)
-- npm 10+
+Antes de empezar, ten instalado:
 
-## Inicio rápido
+1. **Node.js 20+** y **npm 10+**  
+   - Comprobar: `node -v` y `npm -v`
+2. **Docker Desktop** (incluye `docker` y `docker compose`)  
+   - Comprobar: `docker -v` y `docker compose version`  
+   - Docker Desktop debe estar **abierto y en ejecución** (ícono de la ballena estable)
+3. Git (opcional, si clonas el repo)
+
+> En Windows, si instalaste Docker y la terminal no reconoce `docker`, cierra y vuelve a abrir la terminal (o Cursor) para que tome el PATH.
+
+---
+
+## Instalación desde cero
+
+### 1. Clonar / abrir el proyecto
 
 ```bash
-# 1. Instalar dependencias
+cd "ruta/a/distribuidora-nova"
+```
+
+### 2. Instalar dependencias
+
+Desde la raíz del monorepo (instala `frontend` y `backend`):
+
+```bash
 npm install
+```
 
-# 2. Levantar PostgreSQL
+### 3. Configurar variables de entorno
+
+Copia el ejemplo y, si hace falta, ajústalo:
+
+```bash
+# Windows (PowerShell)
+Copy-Item .env.example .env
+
+# macOS / Linux
+cp .env.example .env
+```
+
+El `.env` de desarrollo queda así:
+
+```env
+POSTGRES_USER=nova
+POSTGRES_PASSWORD=nova123
+POSTGRES_DB=ferreteria
+POSTGRES_PORT=5432
+
+DATABASE_URL=postgresql://nova:nova123@localhost:5432/ferreteria
+PORT=3001
+NODE_ENV=development
+
+VITE_API_URL=http://localhost:3001/api
+```
+
+### 4. Levantar PostgreSQL (Docker)
+
+```bash
 npm run db:up
+```
 
-# 3. Aplicar migraciones (cuando existan tablas)
-npm run db:migrate
+Esto crea/inicia el contenedor `distribuidora-nova-db` con:
 
-# 4. Arrancar backend + frontend
+- Puerto: `5432`
+- Usuario: `nova`
+- Contraseña: `nova123`
+- Base inicial: `ferreteria` (definida en `docker-compose.yml`)
+
+Comprobar que está sano:
+
+```bash
+docker ps
+# Debe verse: distribuidora-nova-db ... (healthy) ... 0.0.0.0:5432->5432/tcp
+```
+
+### 5. Crear la base `ferreteria` (solo si no existe)
+
+Si el volumen de Docker ya existía con otra base, créala:
+
+```bash
+docker exec -i distribuidora-nova-db psql -U nova -d postgres -c "CREATE DATABASE ferreteria;"
+```
+
+Si ya existe, PostgreSQL avisará; puedes ignorarlo o omitir este paso.
+
+### 6. Ejecutar el script SQL del modelo
+
+Este paso crea todas las tablas `FER_*`, índices, triggers y datos iniciales:
+
+```bash
+docker cp "SQL/Scripts/FERRETERIA_POSTGRESQL.sql" distribuidora-nova-db:/tmp/FERRETERIA_POSTGRESQL.sql
+
+docker exec -i distribuidora-nova-db psql -U nova -d ferreteria -v ON_ERROR_STOP=1 -f /tmp/FERRETERIA_POSTGRESQL.sql
+```
+
+Verificar tablas:
+
+```bash
+docker exec -i distribuidora-nova-db psql -U nova -d ferreteria -c "\dt"
+```
+
+Debes ver solo tablas con prefijo `FER_` (ubicaciones, seguridad, productos, compras, inventario, pedidos, ventas, auditoría, reportes, etc.).
+
+### 7. Arrancar backend + frontend
+
+```bash
 npm run dev
 ```
 
-- Frontend: http://localhost:5173  
-- Backend API: http://localhost:3001/api  
-- Health check: http://localhost:3001/api/health  
+---
+
+## URLs
+
+| Servicio | URL |
+|----------|-----|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:3001 |
+| Health check | http://localhost:3001/api/health |
+| PostgreSQL | `localhost:5432` (**no** se abre en el navegador) |
+
+El health check debe responder algo como:
+
+```json
+{
+  "success": true,
+  "service": "Distribuidora Nova API",
+  "status": "ok",
+  "database": "connected"
+}
+```
+
+> **Importante:** `localhost:5432` es el puerto de la base de datos, no una página web. Para explorarla usa DBeaver, pgAdmin, o `npm run db:studio` (Drizzle Studio).
+
+---
+
+## Credenciales de desarrollo (DB)
+
+| Campo | Valor |
+|-------|-------|
+| Host | `localhost` |
+| Puerto | `5432` |
+| Usuario | `nova` |
+| Contraseña | `nova123` |
+| Base de datos | `ferreteria` |
+| Connection string | `postgresql://nova:nova123@localhost:5432/ferreteria` |
+
+---
 
 ## Scripts útiles
 
 | Comando | Descripción |
 |---------|-------------|
+| `npm install` | Instala dependencias del monorepo |
 | `npm run dev` | Backend + frontend en paralelo |
-| `npm run dev:backend` | Solo API |
-| `npm run dev:frontend` | Solo React |
+| `npm run dev:backend` | Solo API (puerto 3001) |
+| `npm run dev:frontend` | Solo React (puerto 5173) |
 | `npm run db:up` | Inicia PostgreSQL en Docker |
-| `npm run db:down` | Detiene PostgreSQL |
+| `npm run db:down` | Detiene PostgreSQL (conserva datos) |
 | `npm run db:generate` | Genera migraciones Drizzle |
-| `npm run db:migrate` | Aplica migraciones |
+| `npm run db:push` | Empuja schema Drizzle a la DB |
+| `npm run db:migrate` | Aplica migraciones Drizzle |
 | `npm run db:studio` | Abre Drizzle Studio |
-| `npm run db:seed` | Datos de prueba |
 
-## Estructura
+---
+
+## Estructura del proyecto
 
 ```
 distribuidora-nova/
-├── backend/          # Express + Drizzle
-├── frontend/         # React + Vite
-├── docker-compose.yml
-└── package.json      # Workspaces
+├── backend/                 # API Express + Drizzle
+│   ├── src/
+│   ├── drizzle.config.cjs
+│   └── package.json
+├── frontend/                # React + Vite
+│   ├── src/
+│   └── package.json
+├── SQL/
+│   ├── Scripts/
+│   │   └── FERRETERIA_POSTGRESQL.sql   # Modelo oficial (tablas FER_*)
+│   ├── DBMLs/                          # Diagramas para dbdiagram.io
+│   └── Diagramas-ER/                   # Export PNG/SVG del E/R
+├── docker-compose.yml       # PostgreSQL 16
+├── .env.example
+├── package.json             # Workspaces npm
+└── README.md
 ```
 
-## Credenciales de desarrollo (DB)
+---
 
-- Host: `localhost:5432`
-- Usuario: `nova`
-- Contraseña: `nova123`
-- Base de datos: `distribuidora_nova`
+## Resumen rápido (cuando ya instalaste todo una vez)
+
+```bash
+# Docker Desktop abierto
+npm run db:up
+npm run dev
+```
+
+Si la base está vacía o es un entorno nuevo, vuelve a correr el paso 6 (script SQL).
+
+---
+
+## Solución de problemas
+
+| Problema | Qué hacer |
+|----------|-----------|
+| `docker` no se reconoce | Abre Docker Desktop; reinicia la terminal; verifica PATH |
+| `database: disconnected` en `/api/health` | Corre `npm run db:up` y espera a que el contenedor esté `healthy` |
+| Puerto 5432 ocupado | Cierra otra instancia de Postgres o cambia el puerto en `docker-compose.yml` y `.env` |
+| El script SQL falla a mitad | Revisa el error; si las tablas ya existen, usa una DB limpia o elimina el volumen (`docker compose down -v`) y repite desde el paso 4 |
+| Frontend no habla con la API | Confirma `VITE_API_URL=http://localhost:3001/api` y que el backend esté en 3001 |
+
+### Reinicio limpio de la base (borra datos del volumen)
+
+```bash
+npm run db:down
+docker compose down -v
+npm run db:up
+# Luego crear DB si hace falta y volver a ejecutar SQL/Scripts/FERRETERIA_POSTGRESQL.sql
+```
