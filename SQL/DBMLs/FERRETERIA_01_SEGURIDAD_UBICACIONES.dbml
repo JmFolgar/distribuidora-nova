@@ -1,0 +1,120 @@
+Project FERRETERIA_SEGURIDAD_UBICACIONES {
+  database_type: 'PostgreSQL'
+}
+
+Table FER_DEPARTAMENTO {
+  DEP_ID_DEPARTAMENTO bigint [pk, increment]
+  DEP_CODIGO varchar(10) [not null, unique]
+  DEP_NOMBRE varchar(100) [not null, unique]
+}
+
+Table FER_MUNICIPIO {
+  MUN_ID_MUNICIPIO bigint [pk, increment]
+  MUN_ID_DEPARTAMENTO bigint [not null]
+  MUN_CODIGO varchar(10) [not null]
+  MUN_NOMBRE varchar(100) [not null]
+}
+
+Table FER_DIRECCION {
+  DIR_ID_DIRECCION bigint [pk, increment]
+  DIR_ID_MUNICIPIO bigint [not null]
+  DIR_ZONA varchar(10)
+  DIR_COLONIA varchar(120)
+  DIR_CALLE varchar(120)
+  DIR_AVENIDA varchar(120)
+  DIR_NUMERO_CASA varchar(30)
+  DIR_REFERENCIA varchar(300)
+}
+
+Table FER_USUARIO {
+  USU_ID_USUARIO bigint [pk, increment]
+  USU_ID_DIRECCION bigint
+  USU_PRIMER_NOMBRE varchar(60) [not null]
+  USU_SEGUNDO_NOMBRE varchar(60)
+  USU_TERCER_NOMBRE varchar(60)
+  USU_PRIMER_APELLIDO varchar(60) [not null]
+  USU_SEGUNDO_APELLIDO varchar(60)
+  USU_NOMBRE_USUARIO varchar(60) [not null, unique]
+  USU_CORREO varchar(254) [not null, unique]
+  USU_TELEFONO varchar(30)
+  USU_CLAVE_HASH varchar(255) [not null]
+  USU_ESTADO char(1) [not null]
+  USU_INTENTOS_FALLIDOS integer [not null]
+  USU_FECHA_BLOQUEO timestamptz
+  USU_ULTIMO_ACCESO timestamptz
+  USU_FECHA_CREACION timestamptz [not null]
+  USU_FECHA_MODIFICACION timestamptz [not null]
+}
+
+Table FER_ROL {
+  ROL_ID_ROL bigint [pk, increment]
+  ROL_NOMBRE varchar(60) [not null, unique]
+  ROL_DESCRIPCION varchar(250) [not null]
+  ROL_ESTADO char(1) [not null]
+}
+
+Table FER_PERMISO {
+  PER_ID_PERMISO bigint [pk, increment]
+  PER_CODIGO varchar(80) [not null, unique]
+  PER_NOMBRE varchar(100) [not null]
+  PER_MODULO varchar(60) [not null]
+  PER_ACCION varchar(60) [not null]
+  PER_DESCRIPCION varchar(250) [not null]
+  PER_ESTADO char(1) [not null]
+}
+
+Table FER_USUARIO_ROL {
+  URO_ID_USUARIO_ROL bigint [pk, increment]
+  URO_ID_USUARIO bigint [not null]
+  URO_ID_ROL bigint [not null]
+  URO_FECHA_ASIGNACION timestamptz [not null]
+  URO_FECHA_REVOCACION timestamptz
+  URO_ESTADO char(1) [not null]
+}
+
+Table FER_ROL_PERMISO {
+  RPE_ID_ROL_PERMISO bigint [pk, increment]
+  RPE_ID_ROL bigint [not null]
+  RPE_ID_PERMISO bigint [not null]
+  RPE_FECHA_ASIGNACION timestamptz [not null]
+  RPE_ESTADO char(1) [not null]
+}
+
+Table FER_CLIENTE {
+  CLI_ID_CLIENTE bigint [pk, increment]
+  CLI_ID_DIRECCION bigint
+  CLI_TIPO_PERSONA varchar(10) [not null]
+  CLI_NIT varchar(20)
+  CLI_PRIMER_NOMBRE varchar(60)
+  CLI_SEGUNDO_NOMBRE varchar(60)
+  CLI_TERCER_NOMBRE varchar(60)
+  CLI_PRIMER_APELLIDO varchar(60)
+  CLI_SEGUNDO_APELLIDO varchar(60)
+  CLI_RAZON_SOCIAL varchar(180)
+  CLI_CORREO varchar(254)
+  CLI_TELEFONO varchar(30)
+  CLI_ESTADO char(1) [not null]
+  CLI_FECHA_CREACION timestamptz [not null]
+}
+
+Table FER_PROVEEDOR {
+  PRV_ID_PROVEEDOR bigint [pk, increment]
+  PRV_ID_DIRECCION bigint [not null]
+  PRV_NIT varchar(20) [not null, unique]
+  PRV_RAZON_SOCIAL varchar(180) [not null]
+  PRV_NOMBRE_CONTACTO varchar(180)
+  PRV_CORREO varchar(254) [not null]
+  PRV_TELEFONO varchar(30) [not null]
+  PRV_ESTADO char(1) [not null]
+  PRV_FECHA_CREACION timestamptz [not null]
+}
+
+Ref: FER_MUNICIPIO.MUN_ID_DEPARTAMENTO > FER_DEPARTAMENTO.DEP_ID_DEPARTAMENTO
+Ref: FER_DIRECCION.DIR_ID_MUNICIPIO > FER_MUNICIPIO.MUN_ID_MUNICIPIO
+Ref: FER_USUARIO.USU_ID_DIRECCION > FER_DIRECCION.DIR_ID_DIRECCION
+Ref: FER_CLIENTE.CLI_ID_DIRECCION > FER_DIRECCION.DIR_ID_DIRECCION
+Ref: FER_PROVEEDOR.PRV_ID_DIRECCION > FER_DIRECCION.DIR_ID_DIRECCION
+Ref: FER_USUARIO_ROL.URO_ID_USUARIO > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_USUARIO_ROL.URO_ID_ROL > FER_ROL.ROL_ID_ROL
+Ref: FER_ROL_PERMISO.RPE_ID_ROL > FER_ROL.ROL_ID_ROL
+Ref: FER_ROL_PERMISO.RPE_ID_PERMISO > FER_PERMISO.PER_ID_PERMISO

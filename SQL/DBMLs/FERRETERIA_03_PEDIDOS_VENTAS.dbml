@@ -1,0 +1,158 @@
+Project FERRETERIA_PEDIDOS_VENTAS {
+  database_type: 'PostgreSQL'
+}
+
+Table FER_USUARIO {
+  USU_ID_USUARIO bigint [pk, increment]
+  USU_NOMBRE_USUARIO varchar(60) [not null, unique]
+  USU_CORREO varchar(254) [not null, unique]
+  USU_ESTADO char(1) [not null]
+}
+
+Table FER_CLIENTE {
+  CLI_ID_CLIENTE bigint [pk, increment]
+  CLI_TIPO_PERSONA varchar(10) [not null]
+  CLI_NIT varchar(20)
+  CLI_PRIMER_NOMBRE varchar(60)
+  CLI_PRIMER_APELLIDO varchar(60)
+  CLI_RAZON_SOCIAL varchar(180)
+  CLI_CORREO varchar(254)
+  CLI_TELEFONO varchar(30)
+  CLI_ESTADO char(1) [not null]
+}
+
+Table FER_PRODUCTO {
+  PRO_ID_PRODUCTO bigint [pk, increment]
+  PRO_CODIGO varchar(50) [not null, unique]
+  PRO_NOMBRE varchar(150) [not null]
+  PRO_PRECIO_COMPRA numeric(14,2) [not null]
+  PRO_PRECIO_VENTA numeric(14,2) [not null]
+  PRO_PORCENTAJE_IMPUESTO numeric(5,2) [not null]
+  PRO_EXISTENCIA_MINIMA numeric(14,3) [not null]
+  PRO_ESTADO char(1) [not null]
+}
+
+Table FER_ESTADO_PEDIDO {
+  EPE_ID_ESTADO_PEDIDO bigint [pk, increment]
+  EPE_CODIGO varchar(30) [not null, unique]
+  EPE_NOMBRE varchar(80) [not null]
+  EPE_ORDEN integer [not null, unique]
+  EPE_PERMITE_MODIFICAR boolean [not null]
+  EPE_PERMITE_FACTURAR boolean [not null]
+  EPE_ESTADO char(1) [not null]
+}
+
+Table FER_DESCUENTO {
+  DES_ID_DESCUENTO bigint [pk, increment]
+  DES_NOMBRE varchar(100) [not null]
+  DES_TIPO varchar(15) [not null]
+  DES_VALOR numeric(14,2) [not null]
+  DES_REQUIERE_APROBACION boolean [not null]
+  DES_FECHA_INICIO timestamptz [not null]
+  DES_FECHA_FIN timestamptz [not null]
+  DES_ESTADO char(1) [not null]
+}
+
+Table FER_PEDIDO {
+  PED_ID_PEDIDO bigint [pk, increment]
+  PED_ID_CLIENTE bigint [not null]
+  PED_ID_ESTADO_PEDIDO bigint [not null]
+  PED_ID_DESCUENTO bigint
+  PED_NUMERO_PEDIDO varchar(40) [not null, unique]
+  PED_FECHA_PEDIDO timestamptz [not null]
+  PED_FECHA_REQUERIDA date
+  PED_PORCENTAJE_DESCUENTO numeric(5,2) [not null]
+  PED_OBSERVACION varchar(500)
+}
+
+Table FER_DETALLE_PEDIDO {
+  DPE_ID_DETALLE_PEDIDO bigint [pk, increment]
+  DPE_ID_PEDIDO bigint [not null]
+  DPE_ID_PRODUCTO bigint [not null]
+  DPE_CANTIDAD numeric(14,3) [not null]
+  DPE_PRECIO_UNITARIO numeric(14,2) [not null]
+  DPE_PORCENTAJE_DESCUENTO numeric(5,2) [not null]
+  DPE_PORCENTAJE_IMPUESTO numeric(5,2) [not null]
+}
+
+Table FER_HISTORIAL_PEDIDO {
+  HPE_ID_HISTORIAL_PEDIDO bigint [pk, increment]
+  HPE_ID_PEDIDO bigint [not null]
+  HPE_ID_ESTADO_ANTERIOR bigint
+  HPE_ID_ESTADO_NUEVO bigint [not null]
+  HPE_ID_USUARIO bigint [not null]
+  HPE_FECHA_CAMBIO timestamptz [not null]
+  HPE_OBSERVACION varchar(500)
+}
+
+Table FER_APROBACION {
+  APR_ID_APROBACION bigint [pk, increment]
+  APR_ID_PEDIDO bigint [not null]
+  APR_ID_USUARIO_SOLICITA bigint [not null]
+  APR_ID_USUARIO_AUTORIZA bigint
+  APR_TIPO_APROBACION varchar(30) [not null]
+  APR_VALOR_SOLICITADO numeric(14,2) [not null]
+  APR_VALOR_PERMITIDO numeric(14,2) [not null]
+  APR_ESTADO varchar(15) [not null]
+  APR_FECHA_SOLICITUD timestamptz [not null]
+  APR_FECHA_RESPUESTA timestamptz
+  APR_OBSERVACION varchar(500)
+}
+
+Table FER_VENTA {
+  VEN_ID_VENTA bigint [pk, increment]
+  VEN_ID_PEDIDO bigint [not null, unique]
+  VEN_NUMERO_FACTURA varchar(40) [not null, unique]
+  VEN_FECHA_VENTA timestamptz [not null]
+  VEN_ESTADO varchar(15) [not null]
+  VEN_FECHA_FINALIZACION timestamptz
+}
+
+Table FER_DETALLE_VENTA {
+  DVE_ID_DETALLE_VENTA bigint [pk, increment]
+  DVE_ID_VENTA bigint [not null]
+  DVE_ID_DETALLE_PEDIDO bigint [not null, unique]
+  DVE_CANTIDAD numeric(14,3) [not null]
+  DVE_PRECIO_UNITARIO numeric(14,2) [not null]
+  DVE_COSTO_UNITARIO numeric(14,2) [not null]
+  DVE_PORCENTAJE_DESCUENTO numeric(5,2) [not null]
+  DVE_PORCENTAJE_IMPUESTO numeric(5,2) [not null]
+}
+
+Table FER_METODO_PAGO {
+  MPA_ID_METODO_PAGO bigint [pk, increment]
+  MPA_CODIGO varchar(30) [not null, unique]
+  MPA_NOMBRE varchar(80) [not null, unique]
+  MPA_REQUIERE_REFERENCIA boolean [not null]
+  MPA_ESTADO char(1) [not null]
+}
+
+Table FER_PAGO {
+  PAG_ID_PAGO bigint [pk, increment]
+  PAG_ID_VENTA bigint [not null]
+  PAG_ID_METODO_PAGO bigint [not null]
+  PAG_NUMERO_PAGO varchar(40) [not null, unique]
+  PAG_FECHA_PAGO timestamptz [not null]
+  PAG_MONTO numeric(14,2) [not null]
+  PAG_REFERENCIA varchar(100)
+  PAG_ESTADO varchar(15) [not null]
+  PAG_OBSERVACION varchar(500)
+}
+
+Ref: FER_PEDIDO.PED_ID_CLIENTE > FER_CLIENTE.CLI_ID_CLIENTE
+Ref: FER_PEDIDO.PED_ID_ESTADO_PEDIDO > FER_ESTADO_PEDIDO.EPE_ID_ESTADO_PEDIDO
+Ref: FER_PEDIDO.PED_ID_DESCUENTO > FER_DESCUENTO.DES_ID_DESCUENTO
+Ref: FER_DETALLE_PEDIDO.DPE_ID_PEDIDO > FER_PEDIDO.PED_ID_PEDIDO
+Ref: FER_DETALLE_PEDIDO.DPE_ID_PRODUCTO > FER_PRODUCTO.PRO_ID_PRODUCTO
+Ref: FER_HISTORIAL_PEDIDO.HPE_ID_PEDIDO > FER_PEDIDO.PED_ID_PEDIDO
+Ref: FER_HISTORIAL_PEDIDO.HPE_ID_ESTADO_ANTERIOR > FER_ESTADO_PEDIDO.EPE_ID_ESTADO_PEDIDO
+Ref: FER_HISTORIAL_PEDIDO.HPE_ID_ESTADO_NUEVO > FER_ESTADO_PEDIDO.EPE_ID_ESTADO_PEDIDO
+Ref: FER_HISTORIAL_PEDIDO.HPE_ID_USUARIO > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_APROBACION.APR_ID_PEDIDO > FER_PEDIDO.PED_ID_PEDIDO
+Ref: FER_APROBACION.APR_ID_USUARIO_SOLICITA > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_APROBACION.APR_ID_USUARIO_AUTORIZA > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_VENTA.VEN_ID_PEDIDO - FER_PEDIDO.PED_ID_PEDIDO
+Ref: FER_DETALLE_VENTA.DVE_ID_VENTA > FER_VENTA.VEN_ID_VENTA
+Ref: FER_DETALLE_VENTA.DVE_ID_DETALLE_PEDIDO - FER_DETALLE_PEDIDO.DPE_ID_DETALLE_PEDIDO
+Ref: FER_PAGO.PAG_ID_VENTA > FER_VENTA.VEN_ID_VENTA
+Ref: FER_PAGO.PAG_ID_METODO_PAGO > FER_METODO_PAGO.MPA_ID_METODO_PAGO

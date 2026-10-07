@@ -1,0 +1,64 @@
+Project FERRETERIA_AUDITORIA_REPORTES {
+  database_type: 'PostgreSQL'
+}
+
+Table FER_USUARIO {
+  USU_ID_USUARIO bigint [pk, increment]
+  USU_NOMBRE_USUARIO varchar(60) [not null, unique]
+  USU_CORREO varchar(254) [not null, unique]
+  USU_ESTADO char(1) [not null]
+}
+
+Table FER_PARAMETRO {
+  PAR_ID_PARAMETRO bigint [pk, increment]
+  PAR_ID_USUARIO_MODIFICA bigint [not null]
+  PAR_CODIGO varchar(80) [not null, unique]
+  PAR_NOMBRE varchar(120) [not null]
+  PAR_VALOR varchar(500) [not null]
+  PAR_TIPO_DATO varchar(15) [not null]
+  PAR_DESCRIPCION varchar(300)
+  PAR_ESTADO char(1) [not null]
+  PAR_FECHA_MODIFICACION timestamptz [not null]
+}
+
+Table FER_AUDITORIA {
+  AUD_ID_AUDITORIA bigint [pk, increment]
+  AUD_ID_USUARIO bigint [not null]
+  AUD_FECHA_EVENTO timestamptz [not null]
+  AUD_MODULO varchar(60) [not null]
+  AUD_ACCION varchar(60) [not null]
+  AUD_ENTIDAD varchar(80) [not null]
+  AUD_ID_REGISTRO bigint [not null]
+  AUD_VALOR_ANTERIOR jsonb
+  AUD_VALOR_NUEVO jsonb
+  AUD_DIRECCION_IP inet
+  AUD_RESULTADO varchar(10) [not null]
+  AUD_MENSAJE varchar(500)
+}
+
+Table FER_REPORTE {
+  REP_ID_REPORTE bigint [pk, increment]
+  REP_CODIGO varchar(50) [not null, unique]
+  REP_NOMBRE varchar(120) [not null]
+  REP_DESCRIPCION varchar(300) [not null]
+  REP_ORIGEN_DATOS text [not null]
+  REP_PERMITE_FECHAS boolean [not null]
+  REP_ESTADO char(1) [not null]
+}
+
+Table FER_EJECUCION_REPORTE {
+  ERE_ID_EJECUCION_REPORTE bigint [pk, increment]
+  ERE_ID_REPORTE bigint [not null]
+  ERE_ID_USUARIO bigint [not null]
+  ERE_FECHA_EJECUCION timestamptz [not null]
+  ERE_FILTROS jsonb
+  ERE_FORMATO varchar(10) [not null]
+  ERE_ESTADO varchar(15) [not null]
+  ERE_RUTA_ARCHIVO text
+  ERE_MENSAJE_ERROR varchar(500)
+}
+
+Ref: FER_PARAMETRO.PAR_ID_USUARIO_MODIFICA > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_AUDITORIA.AUD_ID_USUARIO > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_EJECUCION_REPORTE.ERE_ID_REPORTE > FER_REPORTE.REP_ID_REPORTE
+Ref: FER_EJECUCION_REPORTE.ERE_ID_USUARIO > FER_USUARIO.USU_ID_USUARIO

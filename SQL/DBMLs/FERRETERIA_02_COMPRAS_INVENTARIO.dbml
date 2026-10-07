@@ -1,0 +1,136 @@
+Project FERRETERIA_COMPRAS_INVENTARIO {
+  database_type: 'PostgreSQL'
+}
+
+Table FER_USUARIO {
+  USU_ID_USUARIO bigint [pk, increment]
+  USU_NOMBRE_USUARIO varchar(60) [not null, unique]
+  USU_CORREO varchar(254) [not null, unique]
+  USU_ESTADO char(1) [not null]
+}
+
+Table FER_PROVEEDOR {
+  PRV_ID_PROVEEDOR bigint [pk, increment]
+  PRV_NIT varchar(20) [not null, unique]
+  PRV_RAZON_SOCIAL varchar(180) [not null]
+  PRV_ESTADO char(1) [not null]
+}
+
+Table FER_CATEGORIA {
+  CAT_ID_CATEGORIA bigint [pk, increment]
+  CAT_NOMBRE varchar(100) [not null, unique]
+  CAT_DESCRIPCION varchar(250)
+  CAT_ESTADO char(1) [not null]
+}
+
+Table FER_UNIDAD_MEDIDA {
+  UME_ID_UNIDAD_MEDIDA bigint [pk, increment]
+  UME_CODIGO varchar(20) [not null, unique]
+  UME_NOMBRE varchar(80) [not null, unique]
+  UME_ABREVIATURA varchar(15) [not null]
+  UME_ESTADO char(1) [not null]
+}
+
+Table FER_PRODUCTO {
+  PRO_ID_PRODUCTO bigint [pk, increment]
+  PRO_ID_CATEGORIA bigint [not null]
+  PRO_ID_UNIDAD_MEDIDA bigint [not null]
+  PRO_CODIGO varchar(50) [not null, unique]
+  PRO_NOMBRE varchar(150) [not null]
+  PRO_DESCRIPCION varchar(500)
+  PRO_PRECIO_COMPRA numeric(14,2) [not null]
+  PRO_PRECIO_VENTA numeric(14,2) [not null]
+  PRO_PORCENTAJE_IMPUESTO numeric(5,2) [not null]
+  PRO_EXISTENCIA_MINIMA numeric(14,3) [not null]
+  PRO_ESTADO char(1) [not null]
+  PRO_FECHA_CREACION timestamptz [not null]
+  PRO_FECHA_MODIFICACION timestamptz [not null]
+}
+
+Table FER_COMPRA {
+  COM_ID_COMPRA bigint [pk, increment]
+  COM_ID_PROVEEDOR bigint [not null]
+  COM_NUMERO_COMPRA varchar(40) [not null, unique]
+  COM_FECHA_COMPRA timestamptz [not null]
+  COM_FECHA_ESPERADA date
+  COM_ESTADO varchar(20) [not null]
+  COM_OBSERVACION varchar(500)
+}
+
+Table FER_DETALLE_COMPRA {
+  DCO_ID_DETALLE_COMPRA bigint [pk, increment]
+  DCO_ID_COMPRA bigint [not null]
+  DCO_ID_PRODUCTO bigint [not null]
+  DCO_CANTIDAD numeric(14,3) [not null]
+  DCO_COSTO_UNITARIO numeric(14,2) [not null]
+  DCO_PORCENTAJE_DESCUENTO numeric(5,2) [not null]
+  DCO_PORCENTAJE_IMPUESTO numeric(5,2) [not null]
+}
+
+Table FER_RECEPCION {
+  REC_ID_RECEPCION bigint [pk, increment]
+  REC_ID_COMPRA bigint [not null]
+  REC_NUMERO_RECEPCION varchar(40) [not null, unique]
+  REC_FECHA_RECEPCION timestamptz [not null]
+  REC_ESTADO varchar(20) [not null]
+  REC_OBSERVACION varchar(500)
+}
+
+Table FER_DETALLE_RECEPCION {
+  DRE_ID_DETALLE_RECEPCION bigint [pk, increment]
+  DRE_ID_RECEPCION bigint [not null]
+  DRE_ID_DETALLE_COMPRA bigint [not null]
+  DRE_CANTIDAD_RECIBIDA numeric(14,3) [not null]
+  DRE_CANTIDAD_RECHAZADA numeric(14,3) [not null]
+  DRE_MOTIVO_RECHAZO varchar(300)
+}
+
+Table FER_INVENTARIO {
+  INV_ID_INVENTARIO bigint [pk, increment]
+  INV_ID_PRODUCTO bigint [not null, unique]
+  INV_EXISTENCIA_ACTUAL numeric(14,3) [not null]
+  INV_CANTIDAD_RESERVADA numeric(14,3) [not null]
+  INV_FECHA_ULTIMO_MOVIMIENTO timestamptz
+  INV_VERSION integer [not null]
+}
+
+Table FER_MOVIMIENTO_INVENTARIO {
+  MOV_ID_MOVIMIENTO bigint [pk, increment]
+  MOV_ID_INVENTARIO bigint [not null]
+  MOV_ID_USUARIO bigint [not null]
+  MOV_TIPO_MOVIMIENTO varchar(15) [not null]
+  MOV_CANTIDAD numeric(14,3) [not null]
+  MOV_EXISTENCIA_ANTERIOR numeric(14,3) [not null]
+  MOV_EXISTENCIA_NUEVA numeric(14,3) [not null]
+  MOV_FECHA_MOVIMIENTO timestamptz [not null]
+  MOV_MODULO_ORIGEN varchar(40) [not null]
+  MOV_ID_REGISTRO_ORIGEN bigint [not null]
+  MOV_NUMERO_DOCUMENTO varchar(40)
+  MOV_MOTIVO varchar(300)
+}
+
+Table FER_ALERTA_INVENTARIO {
+  ALE_ID_ALERTA bigint [pk, increment]
+  ALE_ID_MOVIMIENTO bigint [not null]
+  ALE_ID_USUARIO_ATIENDE bigint
+  ALE_TIPO_ALERTA varchar(30) [not null]
+  ALE_MENSAJE varchar(300) [not null]
+  ALE_EXISTENCIA_MINIMA numeric(14,3) [not null]
+  ALE_FECHA_GENERACION timestamptz [not null]
+  ALE_FECHA_ATENCION timestamptz
+  ALE_ESTADO varchar(15) [not null]
+}
+
+Ref: FER_PRODUCTO.PRO_ID_CATEGORIA > FER_CATEGORIA.CAT_ID_CATEGORIA
+Ref: FER_PRODUCTO.PRO_ID_UNIDAD_MEDIDA > FER_UNIDAD_MEDIDA.UME_ID_UNIDAD_MEDIDA
+Ref: FER_COMPRA.COM_ID_PROVEEDOR > FER_PROVEEDOR.PRV_ID_PROVEEDOR
+Ref: FER_DETALLE_COMPRA.DCO_ID_COMPRA > FER_COMPRA.COM_ID_COMPRA
+Ref: FER_DETALLE_COMPRA.DCO_ID_PRODUCTO > FER_PRODUCTO.PRO_ID_PRODUCTO
+Ref: FER_RECEPCION.REC_ID_COMPRA > FER_COMPRA.COM_ID_COMPRA
+Ref: FER_DETALLE_RECEPCION.DRE_ID_RECEPCION > FER_RECEPCION.REC_ID_RECEPCION
+Ref: FER_DETALLE_RECEPCION.DRE_ID_DETALLE_COMPRA > FER_DETALLE_COMPRA.DCO_ID_DETALLE_COMPRA
+Ref: FER_INVENTARIO.INV_ID_PRODUCTO - FER_PRODUCTO.PRO_ID_PRODUCTO
+Ref: FER_MOVIMIENTO_INVENTARIO.MOV_ID_INVENTARIO > FER_INVENTARIO.INV_ID_INVENTARIO
+Ref: FER_MOVIMIENTO_INVENTARIO.MOV_ID_USUARIO > FER_USUARIO.USU_ID_USUARIO
+Ref: FER_ALERTA_INVENTARIO.ALE_ID_MOVIMIENTO > FER_MOVIMIENTO_INVENTARIO.MOV_ID_MOVIMIENTO
+Ref: FER_ALERTA_INVENTARIO.ALE_ID_USUARIO_ATIENDE > FER_USUARIO.USU_ID_USUARIO
