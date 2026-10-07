@@ -1,0 +1,31 @@
+import "./loadEnv.js";
+import express from "express";
+import cors from "cors";
+import healthRouter from "./routes/health.js";
+import productosRouter from "./routes/productos.js";
+import { notFound, errorHandler } from "./middleware/errorHandler.js";
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/", (_req, res) => {
+  res.json({
+    success: true,
+    message: "API Distribuidora Nova",
+    version: "1.0.0",
+  });
+});
+
+app.use("/api/health", healthRouter);
+app.use("/api/productos", productosRouter);
+
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`🔧 Distribuidora Nova API → http://localhost:${PORT}`);
+  console.log(`   Health: http://localhost:${PORT}/api/health`);
+});
