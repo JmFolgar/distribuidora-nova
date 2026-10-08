@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, Search } from "lucide-react";
 import AppShell from "../layout/AppShell";
+import { useAuth } from "../auth/AuthContext";
 import {
   createCliente,
   listClientes,
@@ -88,6 +89,10 @@ function payloadDesdeForm(form) {
 }
 
 export default function ClientesPage() {
+  const { usuario } = useAuth();
+  const puedeEscribir =
+    usuario?.rol === "ADMINISTRADOR" || usuario?.rol === "OPERADOR";
+
   const [clientes, setClientes] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
   const [municipios, setMunicipios] = useState([]);
@@ -251,16 +256,22 @@ export default function ClientesPage() {
   return (
     <AppShell
       title="Clientes"
-      subtitle="Consulta y actualiza clientes. Busca por nombre o NIT."
+      subtitle={
+        puedeEscribir
+          ? "Consulta y actualiza clientes. Busca por nombre o NIT."
+          : "Consulta la lista de clientes. Busca por nombre o NIT."
+      }
       actions={
-        <button
-          type="button"
-          className="btn btn-primary btn-inline"
-          onClick={abrirCrear}
-        >
-          <Plus size={16} strokeWidth={2} />
-          Nuevo cliente
-        </button>
+        puedeEscribir ? (
+          <button
+            type="button"
+            className="btn btn-primary btn-inline"
+            onClick={abrirCrear}
+          >
+            <Plus size={16} strokeWidth={2} />
+            Nuevo cliente
+          </button>
+        ) : null
       }
     >
       {error && (
@@ -303,7 +314,7 @@ export default function ClientesPage() {
                   <th>Teléfono</th>
                   <th>Correo</th>
                   <th>Dirección</th>
-                  <th>Acciones</th>
+                  {puedeEscribir && <th>Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -316,24 +327,26 @@ export default function ClientesPage() {
                     <td className="cell-nowrap">{c.telefono || "—"}</td>
                     <td>{c.correo || "—"}</td>
                     <td>{c.direccion || "—"}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button
-                          type="button"
-                          className="btn-action btn-action--edit"
-                          onClick={() => abrirEditar(c)}
-                          title="Editar cliente"
-                        >
-                          <Pencil size={14} strokeWidth={1.75} />
-                          Editar
-                        </button>
-                      </div>
-                    </td>
+                    {puedeEscribir && (
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            type="button"
+                            className="btn-action btn-action--edit"
+                            onClick={() => abrirEditar(c)}
+                            title="Editar cliente"
+                          >
+                            <Pencil size={14} strokeWidth={1.75} />
+                            Editar
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {clientesFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="empty-cell">
+                    <td colSpan={puedeEscribir ? 6 : 5} className="empty-cell">
                       {clientes.length === 0
                         ? "No hay clientes registrados."
                         : "No se encontraron clientes con esa búsqueda."}
@@ -346,7 +359,7 @@ export default function ClientesPage() {
         )}
       </section>
 
-      {modal && (
+      {modal && puedeEscribir && (
         <div
           className="modal-backdrop"
           role="presentation"

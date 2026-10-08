@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import SinPermisoPage from "../pages/SinPermisoPage";
 import { useAuth } from "../auth/AuthContext";
 
 export default function RoleRoute({ roles, children }) {
@@ -6,7 +6,7 @@ export default function RoleRoute({ roles, children }) {
   const permitido = roles.includes(usuario?.rol);
 
   if (!permitido) {
-    return <Navigate to="/menu" replace />;
+    return <SinPermisoPage />;
   }
 
   return children;

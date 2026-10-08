@@ -12,10 +12,10 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 
-router.use(
-  requireAuth,
-  requireRole("ADMINISTRADOR", "SUPERVISOR", "OPERADOR")
-);
+const ROLES_LECTURA = ["ADMINISTRADOR", "SUPERVISOR", "OPERADOR"];
+const ROLES_ESCRITURA = ["ADMINISTRADOR", "OPERADOR"];
+
+router.use(requireAuth);
 
 const optionalText = (max) =>
   z.preprocess(
@@ -230,7 +230,7 @@ async function resolverDireccion(cliente, data) {
   return dir.id;
 }
 
-router.get("/", async (_req, res, next) => {
+router.get("/", requireRole(...ROLES_LECTURA), async (_req, res, next) => {
   try {
     const clientes = await db
       .select()
@@ -248,7 +248,7 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireRole(...ROLES_ESCRITURA), async (req, res, next) => {
   try {
     const parsed = clienteSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -317,7 +317,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.patch("/:id", async (req, res, next) => {
+router.patch("/:id", requireRole(...ROLES_ESCRITURA), async (req, res, next) => {
   try {
     const id = parseId(req.params.id);
     if (!id) {
