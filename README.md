@@ -118,7 +118,9 @@ docker exec -i distribuidora-nova-db psql -U nova -d ferreteria -c "\dt"
 
 Debes ver solo tablas con prefijo `FER_` (ubicaciones, seguridad, productos, compras, inventario, pedidos, ventas, auditoría, reportes, etc.).
 
-### 7. Cargar usuarios de prueba (login)
+### 7. Cargar datos de prueba (seeders)
+
+`npm install` ya intenta ejecutar todos los seeders (usuarios, ubicaciones, categorías). Si la BD aún no estaba lista, córrelos a mano:
 
 ```bash
 npm run db:seed
@@ -169,22 +171,18 @@ El health check debe responder algo como:
 | Base de datos | `ferreteria` |
 | Connection string | `postgresql://nova:nova123@localhost:5432/ferreteria` |
 
-## Usuarios de prueba (QA / login HU1)
+## Usuarios de prueba (QA / login)
 
-Tras el script SQL, carga los usuarios con el seeder (`seeders/usuarios.seed.js`):
-
-```bash
-npm run db:seed
-```
+Tras el script SQL, los seeders cargan usuarios, ubicaciones y categorías (`npm run db:seed` o al hacer `npm install` si la BD está disponible).
 
 Login en http://localhost:5173 con **correo** y **contraseña**:
 
 | Correo | Contraseña | Nombre | Rol | Estado | Para qué sirve en QA |
 |--------|------------|--------|-----|--------|----------------------|
-| `admin@nova.com` | `Admin123!` | Ana Administradora | Administrador | Activo | Entra al menú de administrador |
-| `supervisor@nova.com` | `Super123!` | Carlos Supervisor | Supervisor | Activo | Entra al menú de supervisor |
-| `operador@nova.com` | `Opera123!` | Luis Operador | Operador | Activo | Entra al menú de operador (caso feliz) |
-| `inactivo@nova.com` | `Inactivo123!` | Maria Inactiva | Operador | Inactivo | **No** debe entrar; pide contactar al administrador |
+| `jfolgar@gmail.com` | `Admin123!` | Jorge Folgar | Administrador | Activo | Entra al menú de administrador |
+| `lguevara@gmail.com` | `Super123!` | Luis Guevara | Supervisor | Activo | Entra al menú de supervisor |
+| `pquan@gmail.com` | `Opera123!` | Pablo Quan | Operador | Activo | Entra al menú de operador (caso feliz) |
+| `pinactivo@gmail.com` | `Inactivo123!` | Prueba Inactivo | Operador | Inactivo | **No** debe entrar; pide contactar al administrador |
 
 **Casos rápidos de prueba**
 
@@ -205,12 +203,13 @@ API de autenticación:
 
 | Comando | Descripción |
 |---------|-------------|
-| `npm install` | Instala dependencias del monorepo |
+| `npm install` | Instala dependencias y ejecuta seeders (`postinstall`) |
 | `npm run dev` | Backend + frontend en paralelo |
 | `npm run dev:backend` | Solo API (puerto 3001) |
 | `npm run dev:frontend` | Solo React (puerto 5173) |
 | `npm run db:up` | Inicia PostgreSQL en Docker |
 | `npm run db:down` | Detiene PostgreSQL (conserva datos) |
+| `npm run db:seed` | Corre todos los seeders (usuarios, ubicaciones, categorías) |
 | `npm run db:generate` | Genera migraciones Drizzle |
 | `npm run db:push` | Empuja schema Drizzle a la DB |
 | `npm run db:migrate` | Aplica migraciones Drizzle |
@@ -235,7 +234,10 @@ distribuidora-nova/
 │   ├── DBMLs/                          # Diagramas para dbdiagram.io
 │   └── Diagramas-ER/                   # Export PNG/SVG del E/R
 ├── seeders/
-│   └── usuarios.seed.js     # Usuarios de prueba (login HU1)
+│   ├── run-all.js           # Orquesta todos los seeders (postinstall)
+│   ├── usuarios.seed.js     # Usuarios de prueba (login)
+│   ├── ubicaciones.seed.js  # Departamentos / municipios
+│   └── categorias.seed.js   # Categorías de productos
 ├── docker-compose.yml       # PostgreSQL 16
 ├── .env.example
 ├── package.json             # Workspaces npm

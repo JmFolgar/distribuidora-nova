@@ -9,42 +9,42 @@ import {
 } from "../backend/src/db/schema.js";
 
 /**
- * Seeder de usuarios de prueba (HU1 — login).
+ * Seeder de usuarios de prueba (login / QA).
  * Uso: npm run db:seed
  */
 const USUARIOS = [
   {
-    primerNombre: "Ana",
-    primerApellido: "Administradora",
-    nombreUsuario: "admin",
-    correo: "admin@nova.com",
+    primerNombre: "Jorge",
+    primerApellido: "Folgar",
+    nombreUsuario: "jfolgar",
+    correo: "jfolgar@gmail.com",
     contrasena: "Admin123!",
     rol: "ADMINISTRADOR",
     estado: "A",
   },
   {
-    primerNombre: "Carlos",
-    primerApellido: "Supervisor",
-    nombreUsuario: "supervisor",
-    correo: "supervisor@nova.com",
+    primerNombre: "Luis",
+    primerApellido: "Guevara",
+    nombreUsuario: "lguevara",
+    correo: "lguevara@gmail.com",
     contrasena: "Super123!",
     rol: "SUPERVISOR",
     estado: "A",
   },
   {
-    primerNombre: "Luis",
-    primerApellido: "Operador",
-    nombreUsuario: "operador",
-    correo: "operador@nova.com",
+    primerNombre: "Pablo",
+    primerApellido: "Quan",
+    nombreUsuario: "pquan",
+    correo: "pquan@gmail.com",
     contrasena: "Opera123!",
     rol: "OPERADOR",
     estado: "A",
   },
   {
-    primerNombre: "Maria",
-    primerApellido: "Inactiva",
-    nombreUsuario: "inactivo",
-    correo: "inactivo@nova.com",
+    primerNombre: "Prueba",
+    primerApellido: "Inactivo",
+    nombreUsuario: "pinactivo",
+    correo: "pinactivo@gmail.com",
     contrasena: "Inactivo123!",
     rol: "OPERADOR",
     estado: "I",
@@ -52,7 +52,7 @@ const USUARIOS = [
 ];
 
 async function seedUsuarios() {
-  console.log("🌱 Seeder usuarios — insertando datos de prueba (HU1)...");
+  console.log("🌱 Seeder usuarios — insertando datos de prueba…");
 
   for (const u of USUARIOS) {
     const [rol] = await db
@@ -91,7 +91,19 @@ async function seedUsuarios() {
       usuarioId = creado.id;
       console.log(`  + Usuario ${u.correo} (${u.estado})`);
     } else {
-      console.log(`  · Usuario ${u.correo} ya existe, se omite`);
+      const hash = await bcrypt.hash(u.contrasena, 10);
+      await db
+        .update(ferUsuario)
+        .set({
+          primerNombre: u.primerNombre,
+          primerApellido: u.primerApellido,
+          nombreUsuario: u.nombreUsuario,
+          claveHash: hash,
+          estado: u.estado,
+          fechaModificacion: new Date(),
+        })
+        .where(eq(ferUsuario.id, existente.id));
+      console.log(`  · Usuario ${u.correo} actualizado`);
     }
 
     const [asignacion] = await db
@@ -113,10 +125,10 @@ async function seedUsuarios() {
   }
 
   console.log("\n✅ Seeder usuarios completado. Credenciales de prueba:");
-  console.log("   admin@nova.com / Admin123!        (ADMINISTRADOR)");
-  console.log("   supervisor@nova.com / Super123!   (SUPERVISOR)");
-  console.log("   operador@nova.com / Opera123!     (OPERADOR)");
-  console.log("   inactivo@nova.com / Inactivo123!  (INACTIVO)");
+  console.log("   jfolgar@gmail.com   / Admin123!     (ADMINISTRADOR)");
+  console.log("   lguevara@gmail.com  / Super123!     (SUPERVISOR)");
+  console.log("   pquan@gmail.com     / Opera123!     (OPERADOR)");
+  console.log("   pinactivo@gmail.com / Inactivo123!  (INACTIVO)");
 
   await pool.end();
 }

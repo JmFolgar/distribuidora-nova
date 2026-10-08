@@ -9,6 +9,7 @@
     "backend"
   ],
   "scripts": {
+    "postinstall": "node seeders/run-all.js",
     "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "dev:backend": "npm run dev -w backend",
     "dev:frontend": "npm run dev -w frontend",
@@ -17,10 +18,11 @@
     "db:generate": "npm run db:generate -w backend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:studio": "npm run db:studio -w backend",
-    "db:seed": "node seeders/usuarios.seed.js",
+    "db:seed": "node seeders/run-all.js",
+    "db:seed:usuarios": "node seeders/usuarios.seed.js",
     "db:seed:ubicaciones": "node seeders/ubicaciones.seed.js",
     "db:seed:categorias": "node seeders/categorias.seed.js",
-    "db:seed:all": "node seeders/usuarios.seed.js && node seeders/ubicaciones.seed.js && node seeders/categorias.seed.js"
+    "db:seed:all": "node seeders/run-all.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
