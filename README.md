@@ -118,11 +118,19 @@ docker exec -i distribuidora-nova-db psql -U nova -d ferreteria -c "\dt"
 
 Debes ver solo tablas con prefijo `FER_` (ubicaciones, seguridad, productos, compras, inventario, pedidos, ventas, auditoría, reportes, etc.).
 
-### 7. Arrancar backend + frontend
+### 7. Cargar usuarios de prueba (login)
+
+```bash
+npm run db:seed
+```
+
+### 8. Arrancar backend + frontend
 
 ```bash
 npm run dev
 ```
+
+Abre http://localhost:5173 — deberías ver la pantalla de ingreso.
 
 ---
 
@@ -160,6 +168,27 @@ El health check debe responder algo como:
 | Contraseña | `nova123` |
 | Base de datos | `ferreteria` |
 | Connection string | `postgresql://nova:nova123@localhost:5432/ferreteria` |
+
+## Usuarios de prueba (login HU1)
+
+Tras el script SQL, ejecuta el seed:
+
+```bash
+npm run db:seed
+```
+
+| Correo | Contraseña | Rol | Estado |
+|--------|------------|-----|--------|
+| `admin@nova.com` | `Admin123!` | Administrador | Activo |
+| `supervisor@nova.com` | `Super123!` | Supervisor | Activo |
+| `operador@nova.com` | `Opera123!` | Operador | Activo |
+| `inactivo@nova.com` | `Inactivo123!` | Operador | Inactivo |
+
+API de autenticación:
+
+- `POST /api/auth/login` — `{ "correo", "contrasena" }`
+- `POST /api/auth/logout` — requiere Bearer token
+- `GET /api/auth/me` — requiere Bearer token
 
 ---
 

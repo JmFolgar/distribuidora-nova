@@ -1,87 +1,58 @@
-import { useEffect, useState } from "react";
-import { getHealth } from "./api/client";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
+import MenuPage from "./pages/MenuPage";
 import "./App.css";
 
-function App() {
-  const [health, setHealth] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+/**
+ * Si el usuario cierra sesión y usa «atrás», fuerza el login
+ * cuando ya no hay sesión activa.
+ */
+function HistoryGuard() {
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    getHealth()
-      .then((data) => {
-        setHealth(data);
-        setError(null);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setHealth(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    function onPopState() {
+      if (!loading && !isAuthenticated) {
+        navigate("/login", { replace: true });
+      }
+    }
 
-  return (
-    <div className="app">
-      <header className="header">
-        <div className="brand">
-          <span className="brand-mark">DN</span>
-          <div>
-            <h1>Distribuidora Nova</h1>
-            <p className="tagline">Sistema de gestión — Ferretería</p>
-          </div>
-        </div>
-      </header>
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [isAuthenticated, loading, navigate]);
 
-      <main className="main">
-        <section className="panel">
-          <h2>Estado del sistema</h2>
-          <p className="muted">
-            Verificación de conexión entre frontend, API y base de datos.
-          </p>
-
-          {loading && <p className="status pending">Comprobando API…</p>}
-
-          {!loading && error && (
-            <div className="status error">
-              <strong>API no disponible</strong>
-              <p>{error}</p>
-              <p className="hint">
-                Asegúrate de tener el backend corriendo (`npm run dev:backend`)
-                y PostgreSQL con Docker (`npm run db:up`).
-              </p>
-            </div>
-          )}
-
-          {!loading && health && (
-            <div className="status ok">
-              <strong>{health.service}</strong>
-              <ul>
-                <li>
-                  Estado: <code>{health.status}</code>
-                </li>
-                <li>
-                  Base de datos: <code>{health.database}</code>
-                </li>
-                <li>
-                  Timestamp: <code>{health.timestamp}</code>
-                </li>
-              </ul>
-            </div>
-          )}
-        </section>
-
-        <section className="panel">
-          <h2>Próximos módulos</h2>
-          <ul className="modules">
-            <li>Inventario / Productos</li>
-            <li>Clientes</li>
-            <li>Ventas</li>
-            <li>Reportes</li>
-          </ul>
-        </section>
-      </main>
-    </div>
-  );
+  return null;
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <HistoryGuard />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/menu"
+            element={
+              <ProtectedRoute>
+                <MenuPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/menu" replace />} />
+          <Route path="*" element={<Navigate to="/menu" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

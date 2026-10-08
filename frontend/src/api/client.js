@@ -1,18 +1,66 @@
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+const TOKEN_KEY = "nova_token";
 
-export async function apiGet(path) {
-  const res = await fetch(`${API_URL}${path}`);
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Error ${res.status}`);
+export function getToken() {
+  return sessionStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token) {
+  sessionStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken() {
+  sessionStorage.removeItem(TOKEN_KEY);
+}
+
+async function parseBody(res) {
+  return res.json().catch(() => ({}));
+}
+
+export async function apiRequest(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
-  return res.json();
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  const body = await parseBody(res);
+
+  if (!res.ok) {
+    const err = new Error(body.message || `Error ${res.status}`);
+    err.status = res.status;
+    err.code = body.code;
+    err.body = body;
+    throw err;
+  }
+
+  return body;
 }
 
 export function getHealth() {
-  return apiGet("/health");
+  return apiRequest("/health");
 }
 
-export function getProductos() {
-  return apiGet("/productos");
+export function login(correo, contrasena) {
+  return apiRequest("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ correo, contrasena }),
+  });
+}
+
+export function logout() {
+  return apiRequest("/auth/logout", { method: "POST" });
+}
+
+export function getMe() {
+  return apiRequest("/auth/me");
 }
