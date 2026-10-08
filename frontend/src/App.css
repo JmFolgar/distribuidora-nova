@@ -298,17 +298,6 @@
   display: block;
 }
 
-.login-hero__foot {
-  position: absolute;
-  left: 2.5rem;
-  bottom: 2rem;
-  z-index: 2;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
 .login-form-panel {
   display: grid;
   place-items: center;
@@ -391,11 +380,6 @@
     right: -10%;
     bottom: -4%;
     width: min(95%, 420px);
-  }
-
-  .login-hero__foot {
-    left: 1.5rem;
-    bottom: 1.15rem;
   }
 
   .login-card {

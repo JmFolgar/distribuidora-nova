@@ -2,6 +2,7 @@
   "name": "distribuidora-nova",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Sistema de gestión para Distribuidora Nova",
   "workspaces": [
     "frontend",
@@ -16,7 +17,7 @@
     "db:generate": "npm run db:generate -w backend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:studio": "npm run db:studio -w backend",
-    "db:seed": "npm run db:seed -w backend"
+    "db:seed": "node seeders/usuarios.seed.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

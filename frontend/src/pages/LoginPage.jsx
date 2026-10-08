@@ -36,10 +36,28 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setHintRecuperacion(false);
+
+    const correoTrim = correo.trim();
+    const sinCorreo = !correoTrim;
+    const sinContrasena = !contrasena;
+
+    if (sinCorreo && sinContrasena) {
+      setError("Ingresa tu correo y tu contraseña");
+      return;
+    }
+    if (sinCorreo) {
+      setError("Ingresa tu correo");
+      return;
+    }
+    if (sinContrasena) {
+      setError("Ingresa tu contraseña");
+      return;
+    }
+
     setEnviando(true);
 
     try {
-      await login(correo.trim(), contrasena);
+      await login(correoTrim, contrasena);
       navigate("/menu", { replace: true });
     } catch (err) {
       setError(err.message || "Correo o contraseña incorrectos");
@@ -71,8 +89,6 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        <p className="login-hero__foot">Ferretería · Inventario · Ventas</p>
-
         <div className="login-hero__art" aria-hidden="true">
           <img
             src={loginIllustration}
@@ -90,7 +106,7 @@ export default function LoginPage() {
 
           <div className="login-form__header">
             <h2>Iniciar sesión</h2>
-            <p>Usa el correo y la contraseña de tu cuenta</p>
+            <p>Ingresa con tu correo y contraseña</p>
           </div>
 
           <label className="field">
@@ -100,9 +116,11 @@ export default function LoginPage() {
               name="correo"
               autoComplete="username"
               value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
+              onChange={(e) => {
+                setCorreo(e.target.value);
+                if (error) setError("");
+              }}
               placeholder="correo@ejemplo.com"
-              required
               disabled={enviando}
             />
           </label>
@@ -115,9 +133,11 @@ export default function LoginPage() {
                 name="contrasena"
                 autoComplete="current-password"
                 value={contrasena}
-                onChange={(e) => setContrasena(e.target.value)}
+                onChange={(e) => {
+                  setContrasena(e.target.value);
+                  if (error) setError("");
+                }}
                 placeholder="••••••••"
-                required
                 disabled={enviando}
               />
               <button

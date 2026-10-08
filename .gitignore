@@ -18,7 +18,8 @@ logs/
 *.log
 npm-debug.log*
 
-# IDE
+# IDE / Cursor
+.cursor/
 .vscode/
 .idea/
 *.swp

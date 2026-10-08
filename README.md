@@ -169,20 +169,29 @@ El health check debe responder algo como:
 | Base de datos | `ferreteria` |
 | Connection string | `postgresql://nova:nova123@localhost:5432/ferreteria` |
 
-## Usuarios de prueba (login HU1)
+## Usuarios de prueba (QA / login HU1)
 
-Tras el script SQL, ejecuta el seed:
+Tras el script SQL, carga los usuarios con el seeder (`seeders/usuarios.seed.js`):
 
 ```bash
 npm run db:seed
 ```
 
-| Correo | Contraseña | Rol | Estado |
-|--------|------------|-----|--------|
-| `admin@nova.com` | `Admin123!` | Administrador | Activo |
-| `supervisor@nova.com` | `Super123!` | Supervisor | Activo |
-| `operador@nova.com` | `Opera123!` | Operador | Activo |
-| `inactivo@nova.com` | `Inactivo123!` | Operador | Inactivo |
+Login en http://localhost:5173 con **correo** y **contraseña**:
+
+| Correo | Contraseña | Nombre | Rol | Estado | Para qué sirve en QA |
+|--------|------------|--------|-----|--------|----------------------|
+| `admin@nova.com` | `Admin123!` | Ana Administradora | Administrador | Activo | Entra al menú de administrador |
+| `supervisor@nova.com` | `Super123!` | Carlos Supervisor | Supervisor | Activo | Entra al menú de supervisor |
+| `operador@nova.com` | `Opera123!` | Luis Operador | Operador | Activo | Entra al menú de operador (caso feliz) |
+| `inactivo@nova.com` | `Inactivo123!` | Maria Inactiva | Operador | Inactivo | **No** debe entrar; pide contactar al administrador |
+
+**Casos rápidos de prueba**
+
+1. Login correcto con cualquiera de los tres activos → menú según rol.
+2. Correo válido + contraseña incorrecta → «Correo o contraseña incorrectos».
+3. Usuario inactivo con contraseña correcta → no entra.
+4. Cerrar sesión → vuelve al login; el botón atrás no reabre el sistema.
 
 API de autenticación:
 
@@ -225,6 +234,8 @@ distribuidora-nova/
 │   │   └── FERRETERIA_POSTGRESQL.sql   # Modelo oficial (tablas FER_*)
 │   ├── DBMLs/                          # Diagramas para dbdiagram.io
 │   └── Diagramas-ER/                   # Export PNG/SVG del E/R
+├── seeders/
+│   └── usuarios.seed.js     # Usuarios de prueba (login HU1)
 ├── docker-compose.yml       # PostgreSQL 16
 ├── .env.example
 ├── package.json             # Workspaces npm

@@ -10,7 +10,7 @@
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.cjs",
     "db:push": "drizzle-kit push --config=drizzle.config.cjs",
     "db:studio": "drizzle-kit studio --config=drizzle.config.cjs",
-    "db:seed": "node src/db/seed.js"
+    "db:seed": "node ../seeders/usuarios.seed.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
