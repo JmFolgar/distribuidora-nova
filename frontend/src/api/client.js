@@ -94,3 +94,24 @@ export function desactivarUsuario(id) {
 export function activarUsuario(id) {
   return apiRequest(`/usuarios/${id}/activar`, { method: "PATCH" });
 }
+
+export function listClientes() {
+  return apiRequest("/clientes");
+}
+
+export function createCliente(payload) {
+  return apiRequest("/clientes", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listDepartamentos() {
+  return apiRequest("/ubicaciones/departamentos");
+}
+
+export function listMunicipios(departamentoId) {
+  return apiRequest(
+    `/ubicaciones/municipios?departamentoId=${encodeURIComponent(departamentoId)}`
+  );
+}

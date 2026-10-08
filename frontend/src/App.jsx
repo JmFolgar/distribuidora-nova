@@ -12,6 +12,7 @@ import RoleRoute from "./components/RoleRoute";
 import LoginPage from "./pages/LoginPage";
 import MenuPage from "./pages/MenuPage";
 import UsuariosPage from "./pages/UsuariosPage";
+import ClientesPage from "./pages/ClientesPage";
 import "./App.css";
 
 /**
@@ -57,6 +58,18 @@ export default function App() {
               <ProtectedRoute>
                 <RoleRoute roles={["ADMINISTRADOR"]}>
                   <UsuariosPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clientes"
+            element={
+              <ProtectedRoute>
+                <RoleRoute
+                  roles={["ADMINISTRADOR", "SUPERVISOR", "OPERADOR"]}
+                >
+                  <ClientesPage />
                 </RoleRoute>
               </ProtectedRoute>
             }

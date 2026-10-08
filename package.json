@@ -17,7 +17,9 @@
     "db:generate": "npm run db:generate -w backend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:studio": "npm run db:studio -w backend",
-    "db:seed": "node seeders/usuarios.seed.js"
+    "db:seed": "node seeders/usuarios.seed.js",
+    "db:seed:ubicaciones": "node seeders/ubicaciones.seed.js",
+    "db:seed:all": "node seeders/usuarios.seed.js && node seeders/ubicaciones.seed.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
