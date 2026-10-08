@@ -30,13 +30,13 @@ const EMPTY_FORM = {
 function validarFormulario(form, modo) {
   const fields = {};
   if (!form.nombre.trim()) fields.nombre = "El nombre es obligatorio";
+  if (!form.rol) fields.rol = "Seleccione un rol";
   if (modo === "crear") {
     if (!form.correo.trim()) fields.correo = "El correo es obligatorio";
     if (!form.contrasena) fields.contrasena = "La contraseña es obligatoria";
     else if (form.contrasena.length < 8) {
       fields.contrasena = "La contraseña debe tener al menos 8 caracteres";
     }
-    if (!form.rol) fields.rol = "Seleccione un rol";
   }
   return fields;
 }
@@ -117,6 +117,7 @@ export default function UsuariosPage() {
     setForm({
       ...EMPTY_FORM,
       nombre: usuario.nombre || "",
+      rol: usuario.rol || "OPERADOR",
     });
     setFieldErrors({});
     setFormError("");
@@ -162,7 +163,10 @@ export default function UsuariosPage() {
           rol: form.rol,
         });
       } else {
-        await updateUsuario(editando.id, { nombre: form.nombre.trim() });
+        await updateUsuario(editando.id, {
+          nombre: form.nombre.trim(),
+          rol: form.rol,
+        });
         if (sesion?.id === editando.id) {
           await refrescarUsuario();
         }
@@ -495,7 +499,7 @@ export default function UsuariosPage() {
                 <p className="page-subtitle">
                   {modal === "crear"
                     ? "Nombre, correo, contraseña (mín. 8) y rol son obligatorios."
-                    : "Actualiza el nombre del usuario. El correo no se modifica aquí."}
+                    : "Actualiza el nombre y el rol. El cambio de rol aplica al volver a iniciar sesión."}
                 </p>
 
                 <form className="modal-form" onSubmit={handleSubmit} noValidate>
@@ -554,29 +558,29 @@ export default function UsuariosPage() {
                           </em>
                         )}
                       </label>
-
-                      <label
-                        className={`field ${fieldErrors.rol ? "field--error" : ""}`}
-                      >
-                        <span>Rol</span>
-                        <select
-                          name="rol"
-                          value={form.rol}
-                          onChange={onChange}
-                          disabled={guardando}
-                        >
-                          {roles.map((r) => (
-                            <option key={r.id} value={r.nombre}>
-                              {ETIQUETA_ROL[r.nombre] || r.nombre}
-                            </option>
-                          ))}
-                        </select>
-                        {fieldErrors.rol && (
-                          <em className="field-error">{fieldErrors.rol}</em>
-                        )}
-                      </label>
                     </>
                   )}
+
+                  <label
+                    className={`field ${fieldErrors.rol ? "field--error" : ""}`}
+                  >
+                    <span>Rol</span>
+                    <select
+                      name="rol"
+                      value={form.rol}
+                      onChange={onChange}
+                      disabled={guardando}
+                    >
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.nombre}>
+                          {ETIQUETA_ROL[r.nombre] || r.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.rol && (
+                      <em className="field-error">{fieldErrors.rol}</em>
+                    )}
+                  </label>
 
                   {formError && (
                     <p className="form-error" role="alert">

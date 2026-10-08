@@ -25,6 +25,9 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(120),
+  rol: z.enum(ROLES_VALIDOS, {
+    errorMap: () => ({ message: "Seleccione un rol válido" }),
+  }),
 });
 
 function splitNombre(nombre) {
@@ -261,7 +264,25 @@ router.patch("/:id", async (req, res, next) => {
       });
     }
 
-    const { primerNombre, primerApellido } = splitNombre(parsed.data.nombre);
+    const { nombre, rol } = parsed.data;
+    const { primerNombre, primerApellido } = splitNombre(nombre);
+
+    const [rolRow] = await db
+      .select()
+      .from(ferRol)
+      .where(and(eq(ferRol.nombre, rol), eq(ferRol.estado, "A")))
+      .limit(1);
+
+    if (!rolRow) {
+      return res.status(400).json({
+        success: false,
+        message: "El rol seleccionado no existe",
+        fields: { rol: "Seleccione un rol válido" },
+      });
+    }
+
+    const rolesActuales = await rolesActivosDeUsuario(id);
+    const rolActual = rolesActuales[0]?.nombre ?? null;
 
     const [actualizado] = await db
       .update(ferUsuario)
@@ -272,6 +293,28 @@ router.patch("/:id", async (req, res, next) => {
       })
       .where(eq(ferUsuario.id, id))
       .returning();
+
+    if (rolActual !== rol) {
+      await db
+        .update(ferUsuarioRol)
+        .set({
+          estado: "I",
+          fechaRevocacion: new Date(),
+        })
+        .where(
+          and(
+            eq(ferUsuarioRol.idUsuario, id),
+            eq(ferUsuarioRol.estado, "A"),
+            sql`${ferUsuarioRol.fechaRevocacion} IS NULL`
+          )
+        );
+
+      await db.insert(ferUsuarioRol).values({
+        idUsuario: id,
+        idRol: rolRow.id,
+        estado: "A",
+      });
+    }
 
     res.json({
       success: true,
