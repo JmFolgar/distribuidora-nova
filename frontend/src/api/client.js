@@ -106,6 +106,13 @@ export function createCliente(payload) {
   });
 }
 
+export function updateCliente(id, payload) {
+  return apiRequest(`/clientes/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listDepartamentos() {
   return apiRequest("/ubicaciones/departamentos");
 }

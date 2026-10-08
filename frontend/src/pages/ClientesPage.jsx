@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Pencil, Plus, Search } from "lucide-react";
 import AppShell from "../layout/AppShell";
 import {
   createCliente,
   listClientes,
   listDepartamentos,
   listMunicipios,
+  updateCliente,
 } from "../api/client";
 
 const EMPTY_FORM = {
@@ -51,6 +52,41 @@ function validarFormulario(form) {
   return fields;
 }
 
+function formDesdeCliente(cliente) {
+  return {
+    nombre: cliente.nombre || "",
+    nit: cliente.nit || "",
+    telefono: cliente.telefono || "",
+    correo: cliente.correo || "",
+    idDepartamento: cliente.idDepartamento
+      ? String(cliente.idDepartamento)
+      : "",
+    idMunicipio: cliente.idMunicipio ? String(cliente.idMunicipio) : "",
+    zona: cliente.zona || "",
+    colonia: cliente.colonia || "",
+    calle: cliente.calle || "",
+    avenida: cliente.avenida || "",
+    numeroCasa: cliente.numeroCasa || "",
+    referencia: cliente.referencia || "",
+  };
+}
+
+function payloadDesdeForm(form) {
+  return {
+    nombre: form.nombre.trim(),
+    nit: form.nit.trim(),
+    telefono: form.telefono.trim() || undefined,
+    correo: form.correo.trim() || undefined,
+    idMunicipio: form.idMunicipio ? Number(form.idMunicipio) : undefined,
+    zona: form.zona.trim() || undefined,
+    colonia: form.colonia.trim() || undefined,
+    calle: form.calle.trim() || undefined,
+    avenida: form.avenida.trim() || undefined,
+    numeroCasa: form.numeroCasa.trim() || undefined,
+    referencia: form.referencia.trim() || undefined,
+  };
+}
+
 export default function ClientesPage() {
   const [clientes, setClientes] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
@@ -58,7 +94,8 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true);
   const [cargandoMunicipios, setCargandoMunicipios] = useState(false);
   const [error, setError] = useState("");
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(null); // 'crear' | 'editar' | null
+  const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -71,10 +108,7 @@ export default function ClientesPage() {
     return clientes.filter(
       (c) =>
         (c.nombre || "").toLowerCase().includes(q) ||
-        (c.nit || "").toLowerCase().includes(q) ||
-        (c.correo || "").toLowerCase().includes(q) ||
-        (c.telefono || "").toLowerCase().includes(q) ||
-        (c.direccion || "").toLowerCase().includes(q)
+        (c.nit || "").toLowerCase().includes(q)
     );
   }, [clientes, busqueda]);
 
@@ -125,7 +159,8 @@ export default function ClientesPage() {
   }, [form.idDepartamento]);
 
   async function abrirCrear() {
-    setModal(true);
+    setModal("crear");
+    setEditando(null);
     setForm(EMPTY_FORM);
     setMunicipios([]);
     setFieldErrors({});
@@ -134,13 +169,28 @@ export default function ClientesPage() {
       const depsRes = await listDepartamentos();
       setDepartamentos(depsRes.data || []);
     } catch {
-      /* la lista ya cargada en página sigue disponible */
+      /* keep existing */
+    }
+  }
+
+  async function abrirEditar(cliente) {
+    setModal("editar");
+    setEditando(cliente);
+    setForm(formDesdeCliente(cliente));
+    setFieldErrors({});
+    setFormError("");
+    try {
+      const depsRes = await listDepartamentos();
+      setDepartamentos(depsRes.data || []);
+    } catch {
+      /* keep existing */
     }
   }
 
   function cerrarModal(forzar = false) {
     if (guardando && !forzar) return;
-    setModal(false);
+    setModal(null);
+    setEditando(null);
     setForm(EMPTY_FORM);
     setMunicipios([]);
     setFieldErrors({});
@@ -175,21 +225,12 @@ export default function ClientesPage() {
 
     setGuardando(true);
     try {
-      await createCliente({
-        nombre: form.nombre.trim(),
-        nit: form.nit.trim(),
-        telefono: form.telefono.trim() || undefined,
-        correo: form.correo.trim() || undefined,
-        idMunicipio: form.idMunicipio
-          ? Number(form.idMunicipio)
-          : undefined,
-        zona: form.zona.trim() || undefined,
-        colonia: form.colonia.trim() || undefined,
-        calle: form.calle.trim() || undefined,
-        avenida: form.avenida.trim() || undefined,
-        numeroCasa: form.numeroCasa.trim() || undefined,
-        referencia: form.referencia.trim() || undefined,
-      });
+      const payload = payloadDesdeForm(form);
+      if (modal === "crear") {
+        await createCliente(payload);
+      } else {
+        await updateCliente(editando.id, payload);
+      }
       setGuardando(false);
       cerrarModal(true);
       await cargar();
@@ -197,7 +238,12 @@ export default function ClientesPage() {
       if (err.body?.fields) {
         setFieldErrors(err.body.fields);
       }
-      setFormError(err.message || "No se pudo registrar el cliente");
+      setFormError(
+        err.message ||
+          (modal === "crear"
+            ? "No se pudo registrar el cliente"
+            : "No se pudo actualizar el cliente")
+      );
       setGuardando(false);
     }
   }
@@ -205,7 +251,7 @@ export default function ClientesPage() {
   return (
     <AppShell
       title="Clientes"
-      subtitle="Registra clientes con nombre y NIT para crearles pedidos y venderles."
+      subtitle="Consulta y actualiza clientes. Busca por nombre o NIT."
       actions={
         <button
           type="button"
@@ -230,8 +276,8 @@ export default function ClientesPage() {
             type="search"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, NIT, correo o teléfono…"
-            aria-label="Buscar clientes"
+            placeholder="Buscar por nombre o NIT…"
+            aria-label="Buscar clientes por nombre o NIT"
           />
         </label>
 
@@ -257,6 +303,7 @@ export default function ClientesPage() {
                   <th>Teléfono</th>
                   <th>Correo</th>
                   <th>Dirección</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -265,15 +312,28 @@ export default function ClientesPage() {
                     <td>
                       <strong>{c.nombre}</strong>
                     </td>
-                    <td className="mono">{c.nit || "—"}</td>
-                    <td>{c.telefono || "—"}</td>
+                    <td className="mono cell-nowrap">{c.nit || "—"}</td>
+                    <td className="cell-nowrap">{c.telefono || "—"}</td>
                     <td>{c.correo || "—"}</td>
                     <td>{c.direccion || "—"}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          className="btn-action btn-action--edit"
+                          onClick={() => abrirEditar(c)}
+                          title="Editar cliente"
+                        >
+                          <Pencil size={14} strokeWidth={1.75} />
+                          Editar
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {clientesFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="empty-cell">
+                    <td colSpan={6} className="empty-cell">
                       {clientes.length === 0
                         ? "No hay clientes registrados."
                         : "No se encontraron clientes con esa búsqueda."}
@@ -293,15 +353,19 @@ export default function ClientesPage() {
           onClick={() => cerrarModal()}
         >
           <div
-            className="modal modal--wide"
+            className="modal modal--wide modal--fit"
             role="dialog"
             aria-modal="true"
             aria-labelledby="clientes-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="clientes-modal-title">Nuevo cliente</h2>
+            <h2 id="clientes-modal-title">
+              {modal === "crear" ? "Nuevo cliente" : "Editar cliente"}
+            </h2>
             <p className="page-subtitle">
-              Ingresa los datos del cliente para registrarlo.
+              {modal === "crear"
+                ? "Ingresa los datos del cliente para registrarlo."
+                : "Actualiza los datos del cliente. Se aplican las mismas validaciones que al crear."}
             </p>
 
             <form className="modal-form" onSubmit={handleSubmit} noValidate>

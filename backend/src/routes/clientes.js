@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, sql, asc } from "drizzle-orm";
+import { eq, sql, asc, and, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db/index.js";
 import {
@@ -18,14 +18,12 @@ router.use(
 );
 
 const optionalText = (max) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .optional()
-    .transform((v) => (v === "" || v == null ? undefined : v));
+  z.preprocess(
+    (v) => (v == null || v === "" ? undefined : v),
+    z.string().trim().max(max).optional()
+  );
 
-const createSchema = z
+const clienteSchema = z
   .object({
     nombre: z.string().trim().min(1, "El nombre es obligatorio").max(180),
     nit: z.string().trim().min(1, "El NIT es obligatorio").max(20),
@@ -133,17 +131,24 @@ function normalizarNit(nit) {
   return nit.trim().toUpperCase().replace(/\s+/g, "");
 }
 
+function parseId(param) {
+  const id = Number(param);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 async function mapCliente(cliente) {
   let direccion = null;
+  let dir = null;
+  let municipio = null;
+  let departamento = null;
+
   if (cliente.idDireccion) {
-    const [dir] = await db
+    [dir] = await db
       .select()
       .from(ferDireccion)
       .where(eq(ferDireccion.id, cliente.idDireccion))
       .limit(1);
 
-    let municipio = null;
-    let departamento = null;
     if (dir) {
       [municipio] = await db
         .select()
@@ -168,10 +173,61 @@ async function mapCliente(cliente) {
     correo: cliente.correo,
     telefono: cliente.telefono,
     direccion,
+    idDireccion: cliente.idDireccion ?? null,
+    idDepartamento: departamento?.id ?? null,
+    idMunicipio: municipio?.id ?? null,
+    zona: dir?.zona ?? null,
+    colonia: dir?.colonia ?? null,
+    calle: dir?.calle ?? null,
+    avenida: dir?.avenida ?? null,
+    numeroCasa: dir?.numeroCasa ?? null,
+    referencia: dir?.referencia ?? null,
     estado: cliente.estado,
     activo: cliente.estado === "A",
     fechaCreacion: cliente.fechaCreacion,
   };
+}
+
+async function resolverDireccion(cliente, data) {
+  const { idMunicipio, zona, colonia, calle, avenida, numeroCasa, referencia } =
+    data;
+
+  if (!idMunicipio) {
+    return cliente.idDireccion ?? null;
+  }
+
+  const [mun] = await db
+    .select({ id: ferMunicipio.id })
+    .from(ferMunicipio)
+    .where(eq(ferMunicipio.id, idMunicipio))
+    .limit(1);
+
+  if (!mun) {
+    const err = new Error("MUNICIPIO_INVALIDO");
+    err.code = "MUNICIPIO_INVALIDO";
+    throw err;
+  }
+
+  const valores = {
+    idMunicipio,
+    zona: zona ?? null,
+    colonia: colonia ?? null,
+    calle: calle ?? null,
+    avenida: avenida ?? null,
+    numeroCasa: numeroCasa ?? null,
+    referencia: referencia ?? null,
+  };
+
+  if (cliente.idDireccion) {
+    await db
+      .update(ferDireccion)
+      .set(valores)
+      .where(eq(ferDireccion.id, cliente.idDireccion));
+    return cliente.idDireccion;
+  }
+
+  const [dir] = await db.insert(ferDireccion).values(valores).returning();
+  return dir.id;
 }
 
 router.get("/", async (_req, res, next) => {
@@ -194,7 +250,7 @@ router.get("/", async (_req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const parsed = createSchema.safeParse(req.body);
+    const parsed = clienteSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
         success: false,
@@ -203,20 +259,8 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    const {
-      nombre,
-      nit,
-      telefono,
-      correo,
-      idMunicipio,
-      zona,
-      colonia,
-      calle,
-      avenida,
-      numeroCasa,
-      referencia,
-    } = parsed.data;
-    const nitNorm = normalizarNit(nit);
+    const data = parsed.data;
+    const nitNorm = normalizarNit(data.nit);
 
     const [nitExiste] = await db
       .select({ id: ferCliente.id })
@@ -233,37 +277,20 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    const { primerNombre, primerApellido } = splitNombre(nombre);
+    const { primerNombre, primerApellido } = splitNombre(data.nombre);
 
     let idDireccion = null;
-    if (idMunicipio) {
-      const [mun] = await db
-        .select({ id: ferMunicipio.id })
-        .from(ferMunicipio)
-        .where(eq(ferMunicipio.id, idMunicipio))
-        .limit(1);
-
-      if (!mun) {
+    try {
+      idDireccion = await resolverDireccion({ idDireccion: null }, data);
+    } catch (err) {
+      if (err.code === "MUNICIPIO_INVALIDO") {
         return res.status(400).json({
           success: false,
           message: "El municipio seleccionado no existe",
           fields: { idMunicipio: "Seleccione un municipio válido" },
         });
       }
-
-      const [dir] = await db
-        .insert(ferDireccion)
-        .values({
-          idMunicipio,
-          zona: zona ?? null,
-          colonia: colonia ?? null,
-          calle: calle ?? null,
-          avenida: avenida ?? null,
-          numeroCasa: numeroCasa ?? null,
-          referencia: referencia ?? null,
-        })
-        .returning();
-      idDireccion = dir.id;
+      throw err;
     }
 
     const [creado] = await db
@@ -274,8 +301,8 @@ router.post("/", async (req, res, next) => {
         nit: nitNorm.slice(0, 20),
         primerNombre: primerNombre.slice(0, 60),
         primerApellido: primerApellido.slice(0, 60),
-        correo: correo ?? null,
-        telefono: telefono ?? null,
+        correo: data.correo ?? null,
+        telefono: data.telefono ?? null,
         estado: "A",
       })
       .returning();
@@ -284,6 +311,100 @@ router.post("/", async (req, res, next) => {
       success: true,
       data: await mapCliente(creado),
       message: "Cliente registrado correctamente",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Identificador de cliente inválido",
+      });
+    }
+
+    const parsed = clienteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Revise los campos obligatorios",
+        fields: fieldErrorsFromZod(parsed.error),
+      });
+    }
+
+    const [cliente] = await db
+      .select()
+      .from(ferCliente)
+      .where(eq(ferCliente.id, id))
+      .limit(1);
+
+    if (!cliente) {
+      return res.status(404).json({
+        success: false,
+        message: "Cliente no encontrado",
+      });
+    }
+
+    const data = parsed.data;
+    const nitNorm = normalizarNit(data.nit);
+
+    const [nitExiste] = await db
+      .select({ id: ferCliente.id })
+      .from(ferCliente)
+      .where(
+        and(
+          sql`UPPER(REPLACE(${ferCliente.nit}, ' ', '')) = ${nitNorm}`,
+          ne(ferCliente.id, id)
+        )
+      )
+      .limit(1);
+
+    if (nitExiste) {
+      return res.status(409).json({
+        success: false,
+        code: "NIT_DUPLICADO",
+        message: "Ya existe un cliente con ese NIT",
+        fields: { nit: "Ya existe un cliente con ese NIT" },
+      });
+    }
+
+    const { primerNombre, primerApellido } = splitNombre(data.nombre);
+
+    let idDireccion = cliente.idDireccion;
+    try {
+      idDireccion = await resolverDireccion(cliente, data);
+    } catch (err) {
+      if (err.code === "MUNICIPIO_INVALIDO") {
+        return res.status(400).json({
+          success: false,
+          message: "El municipio seleccionado no existe",
+          fields: { idMunicipio: "Seleccione un municipio válido" },
+        });
+      }
+      throw err;
+    }
+
+    const [actualizado] = await db
+      .update(ferCliente)
+      .set({
+        idDireccion,
+        nit: nitNorm.slice(0, 20),
+        primerNombre: primerNombre.slice(0, 60),
+        primerApellido: primerApellido.slice(0, 60),
+        correo: data.correo ?? null,
+        telefono: data.telefono ?? null,
+      })
+      .where(eq(ferCliente.id, id))
+      .returning();
+
+    res.json({
+      success: true,
+      data: await mapCliente(actualizado),
+      message: "Cliente actualizado correctamente",
     });
   } catch (err) {
     next(err);

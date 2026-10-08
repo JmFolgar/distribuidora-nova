@@ -1071,6 +1071,10 @@
   padding: 2rem !important;
 }
 
+.cell-nowrap {
+  white-space: nowrap;
+}
+
 .row-actions {
   display: flex;
   flex-wrap: wrap;

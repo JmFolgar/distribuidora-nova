@@ -71,4 +71,5 @@ a {
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

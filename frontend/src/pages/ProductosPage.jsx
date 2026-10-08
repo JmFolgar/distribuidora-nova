@@ -213,8 +213,8 @@ export default function ProductosPage() {
             type="search"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por código, nombre o categoría…"
-            aria-label="Buscar productos"
+            placeholder="Buscar por código o nombre…"
+            aria-label="Buscar productos por código o nombre"
           />
         </label>
 
