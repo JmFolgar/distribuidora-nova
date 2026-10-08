@@ -19,7 +19,8 @@
     "db:studio": "npm run db:studio -w backend",
     "db:seed": "node seeders/usuarios.seed.js",
     "db:seed:ubicaciones": "node seeders/ubicaciones.seed.js",
-    "db:seed:all": "node seeders/usuarios.seed.js && node seeders/ubicaciones.seed.js"
+    "db:seed:categorias": "node seeders/categorias.seed.js",
+    "db:seed:all": "node seeders/usuarios.seed.js && node seeders/ubicaciones.seed.js && node seeders/categorias.seed.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

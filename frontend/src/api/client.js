@@ -115,3 +115,25 @@ export function listMunicipios(departamentoId) {
     `/ubicaciones/municipios?departamentoId=${encodeURIComponent(departamentoId)}`
   );
 }
+
+export function listProductos() {
+  return apiRequest("/productos");
+}
+
+export function listCategorias() {
+  return apiRequest("/productos/categorias");
+}
+
+export function createProducto(payload) {
+  return apiRequest("/productos", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateProducto(id, payload) {
+  return apiRequest(`/productos/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}

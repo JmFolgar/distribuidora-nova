@@ -4,6 +4,7 @@ import {
   varchar,
   char,
   integer,
+  numeric,
   timestamp,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -110,4 +111,82 @@ export const ferCliente = pgTable("FER_CLIENTE", {
   fechaCreacion: timestamp("CLI_FECHA_CREACION", { withTimezone: true })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const ferCategoria = pgTable("FER_CATEGORIA", {
+  id: bigint("CAT_ID_CATEGORIA", { mode: "number" })
+    .generatedByDefaultAsIdentity()
+    .primaryKey(),
+  nombre: varchar("CAT_NOMBRE", { length: 100 }).notNull(),
+  descripcion: varchar("CAT_DESCRIPCION", { length: 250 }),
+  estado: char("CAT_ESTADO", { length: 1 }).notNull().default("A"),
+});
+
+export const ferUnidadMedida = pgTable("FER_UNIDAD_MEDIDA", {
+  id: bigint("UME_ID_UNIDAD_MEDIDA", { mode: "number" })
+    .generatedByDefaultAsIdentity()
+    .primaryKey(),
+  codigo: varchar("UME_CODIGO", { length: 20 }).notNull(),
+  nombre: varchar("UME_NOMBRE", { length: 80 }).notNull(),
+  abreviatura: varchar("UME_ABREVIATURA", { length: 15 }).notNull(),
+  estado: char("UME_ESTADO", { length: 1 }).notNull().default("A"),
+});
+
+export const ferProducto = pgTable("FER_PRODUCTO", {
+  id: bigint("PRO_ID_PRODUCTO", { mode: "number" })
+    .generatedByDefaultAsIdentity()
+    .primaryKey(),
+  idCategoria: bigint("PRO_ID_CATEGORIA", { mode: "number" }).notNull(),
+  idUnidadMedida: bigint("PRO_ID_UNIDAD_MEDIDA", { mode: "number" }).notNull(),
+  codigo: varchar("PRO_CODIGO", { length: 50 }).notNull(),
+  nombre: varchar("PRO_NOMBRE", { length: 150 }).notNull(),
+  descripcion: varchar("PRO_DESCRIPCION", { length: 500 }),
+  precioCompra: numeric("PRO_PRECIO_COMPRA", { precision: 14, scale: 2 })
+    .notNull()
+    .default("0"),
+  precioVenta: numeric("PRO_PRECIO_VENTA", { precision: 14, scale: 2 }).notNull(),
+  porcentajeImpuesto: numeric("PRO_PORCENTAJE_IMPUESTO", {
+    precision: 5,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+  existenciaMinima: numeric("PRO_EXISTENCIA_MINIMA", {
+    precision: 14,
+    scale: 3,
+  })
+    .notNull()
+    .default("0"),
+  estado: char("PRO_ESTADO", { length: 1 }).notNull().default("A"),
+  fechaCreacion: timestamp("PRO_FECHA_CREACION", { withTimezone: true })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  fechaModificacion: timestamp("PRO_FECHA_MODIFICACION", {
+    withTimezone: true,
+  })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const ferInventario = pgTable("FER_INVENTARIO", {
+  id: bigint("INV_ID_INVENTARIO", { mode: "number" })
+    .generatedByDefaultAsIdentity()
+    .primaryKey(),
+  idProducto: bigint("INV_ID_PRODUCTO", { mode: "number" }).notNull(),
+  existenciaActual: numeric("INV_EXISTENCIA_ACTUAL", {
+    precision: 14,
+    scale: 3,
+  })
+    .notNull()
+    .default("0"),
+  cantidadReservada: numeric("INV_CANTIDAD_RESERVADA", {
+    precision: 14,
+    scale: 3,
+  })
+    .notNull()
+    .default("0"),
+  fechaUltimoMovimiento: timestamp("INV_FECHA_ULTIMO_MOVIMIENTO", {
+    withTimezone: true,
+  }),
+  version: integer("INV_VERSION").notNull().default(0),
 });
