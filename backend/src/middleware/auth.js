@@ -26,3 +26,23 @@ export function requireAuth(req, res, next) {
     });
   }
 }
+
+/** Exige que el JWT tenga uno de los roles indicados (p. ej. ADMINISTRADOR). */
+export function requireRole(...rolesPermitidos) {
+  return (req, res, next) => {
+    const rolesUsuario = req.user?.roles || [];
+    const rolPrincipal = req.user?.rol;
+    const tieneRol = rolesPermitidos.some(
+      (r) => rolesUsuario.includes(r) || rolPrincipal === r
+    );
+
+    if (!tieneRol) {
+      return res.status(403).json({
+        success: false,
+        message: "No tiene permisos para realizar esta acción.",
+      });
+    }
+
+    next();
+  };
+}

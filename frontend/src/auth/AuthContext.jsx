@@ -64,6 +64,14 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  /** Vuelve a consultar /auth/me (p. ej. tras editar el usuario de la sesión). */
+  const refrescarUsuario = useCallback(async () => {
+    if (!getToken()) return null;
+    const res = await getMe();
+    setUsuario(res.data);
+    return res.data;
+  }, []);
+
   const value = useMemo(
     () => ({
       usuario,
@@ -71,8 +79,9 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(usuario),
       login,
       logout,
+      refrescarUsuario,
     }),
-    [usuario, loading, login, logout]
+    [usuario, loading, login, logout, refrescarUsuario]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

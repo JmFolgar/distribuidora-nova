@@ -8,8 +8,10 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RoleRoute from "./components/RoleRoute";
 import LoginPage from "./pages/LoginPage";
 import MenuPage from "./pages/MenuPage";
+import UsuariosPage from "./pages/UsuariosPage";
 import "./App.css";
 
 /**
@@ -46,6 +48,16 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MenuPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/usuarios"
+            element={
+              <ProtectedRoute>
+                <RoleRoute roles={["ADMINISTRADOR"]}>
+                  <UsuariosPage />
+                </RoleRoute>
               </ProtectedRoute>
             }
           />

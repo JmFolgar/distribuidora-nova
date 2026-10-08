@@ -4,6 +4,7 @@ import cors from "cors";
 import healthRouter from "./routes/health.js";
 import authRouter from "./routes/auth.js";
 import productosRouter from "./routes/productos.js";
+import usuariosRouter from "./routes/usuarios.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -23,6 +24,7 @@ app.get("/", (_req, res) => {
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/productos", productosRouter);
+app.use("/api/usuarios", usuariosRouter);
 
 app.use(notFound);
 app.use(errorHandler);

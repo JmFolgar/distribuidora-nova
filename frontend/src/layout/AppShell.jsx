@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import NovaMark from "../components/NovaMark";
 import { ETIQUETA_ROL, menuParaRol } from "../config/navigation";
 
 export default function AppShell({ children, title, subtitle, actions }) {
@@ -35,7 +36,7 @@ export default function AppShell({ children, title, subtitle, actions }) {
     <div className={`shell ${collapsed ? "shell--collapsed" : ""}`}>
       <aside className="sidebar" aria-label="Menú principal">
         <div className="sidebar__brand">
-          <span className="brand-mark">DN</span>
+          <NovaMark size={36} />
           {!collapsed && (
             <div className="sidebar__brand-text">
               <strong>Distribuidora Nova</strong>

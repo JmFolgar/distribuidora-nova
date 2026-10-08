@@ -64,3 +64,33 @@ export function logout() {
 export function getMe() {
   return apiRequest("/auth/me");
 }
+
+export function listUsuarios() {
+  return apiRequest("/usuarios");
+}
+
+export function listRoles() {
+  return apiRequest("/usuarios/roles");
+}
+
+export function createUsuario(payload) {
+  return apiRequest("/usuarios", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateUsuario(id, payload) {
+  return apiRequest(`/usuarios/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function desactivarUsuario(id) {
+  return apiRequest(`/usuarios/${id}/desactivar`, { method: "PATCH" });
+}
+
+export function activarUsuario(id) {
+  return apiRequest(`/usuarios/${id}/activar`, { method: "PATCH" });
+}

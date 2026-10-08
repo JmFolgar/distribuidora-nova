@@ -146,7 +146,6 @@ export const NAV_GROUPS = [
         path: "/usuarios",
         icon: UserCog,
         roles: ["ADMINISTRADOR"],
-        soon: true,
       },
       {
         id: "roles",
