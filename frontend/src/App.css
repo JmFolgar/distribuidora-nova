@@ -253,19 +253,23 @@
 
 /* —— Login split (misma familia visual que el dashboard) —— */
 .login-split {
+  height: 100vh;
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(300px, 44%) 1fr;
   background: var(--color-bg);
+  overflow: hidden;
 }
 
 .login-hero {
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 2rem 2.5rem 3.5rem;
+  display: grid;
+  grid-template-rows: 1fr auto minmax(0, 1fr);
+  justify-items: start;
+  min-height: 0;
+  height: 100%;
+  padding: 2rem 2.5rem 1.25rem;
   /* Sin línea divisoria: el degradado y el fade de la ilustración hacen la transición */
   background: linear-gradient(
     145deg,
@@ -290,11 +294,13 @@
 .login-hero__content {
   position: relative;
   z-index: 1;
+  grid-row: 2;
+  justify-self: start;
   max-width: 380px;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  margin: 2.5rem 0 4rem;
+  margin: 0;
 }
 
 .login-hero__copy {
@@ -348,27 +354,31 @@
   color: var(--color-accent);
 }
 
-/* Ilustración más grande, más arriba, desvanecida hacia la derecha */
+/* Ilustración grande y centrada, debajo del texto. */
 .login-hero__art {
   position: absolute;
-  right: -6%;
-  bottom: 4%;
-  width: min(110%, 680px);
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   pointer-events: none;
   user-select: none;
-  z-index: 0;
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    #000 0%,
-    #000 58%,
-    transparent 96%
-  );
-  mask-image: linear-gradient(90deg, #000 0%, #000 58%, transparent 96%);
 }
 
 .login-hero__illustration {
-  width: 100%;
-  height: auto;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: none;
   display: block;
 }
 
@@ -429,12 +439,20 @@
 @media (max-width: 860px) {
   .login-split {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .login-hero {
-    justify-content: flex-start;
-    padding: 1.25rem 1.5rem 6.5rem;
-    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    padding: 1.25rem 1.5rem 1rem;
+  }
+
+  .login-hero__content {
+    grid-row: auto;
   }
 
   .login-hero__name {
@@ -442,18 +460,28 @@
     margin-bottom: 1rem;
   }
 
-  .login-hero__content {
-    margin: 0;
-  }
-
   .login-hero h1 {
     font-size: 1.25rem;
   }
 
   .login-hero__art {
-    right: -10%;
-    bottom: -4%;
-    width: min(95%, 420px);
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    height: 180px;
+    max-height: 30vh;
+    margin-top: 0.75rem;
+    justify-content: center;
+  }
+
+  .login-hero__illustration {
+    width: 100%;
+    max-width: 420px;
+    transform: none;
+    object-position: center bottom;
   }
 
   .login-card {
